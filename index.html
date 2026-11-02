@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tchekhov Editor</title>
+<meta name="description" content="Tchekhov: editor rich text offline com análise textual, SEO e semântica em português.">
+<meta name="theme-color" content="#a855f7">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23141417'/%3E%3Ctext x='32' y='47' font-size='42' text-anchor='middle' fill='%23a855f7' font-family='Georgia' font-weight='bold'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="logo"><span class="logo-mark">T</span><span class="logo-name">Tchekhov</span><small>Editor</small></div>
+  <div class="header-right"><span id="saveState" class="save-state">—</span><button id="themeBtn" class="icon-btn" title="Alternar tema" aria-label="Alternar tema">🌙</button></div>
+</header>
+
+<main class="layout">
+  <section class="editor-col">
+    <nav class="actions" aria-label="Ações rápidas">
+      <button id="btnImportMd">⬆ Importar .md</button>
+      <button id="btnImportJson">⬆ Importar .json</button>
+      <button id="btnExportMd">⬇ Exportar .md</button>
+      <button id="btnExportJson">⬇ Exportar .json</button>
+      <button id="btnCopy">⎘ Copiar texto</button>
+      <button id="btnSave" class="primary">💾 Salvar rascunho</button>
+      <button id="btnClear" class="danger">🗑 Limpar</button>
+      <input type="file" id="fileMd" accept=".md,.markdown,.txt,text/markdown" hidden>
+      <input type="file" id="fileJson" accept=".json,application/json" hidden>
+    </nav>
+
+    <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatação">
+      <select id="blockSel" title="Estilo de parágrafo">
+        <option value="">Estilo…</option>
+        <option value="p">Parágrafo (P)</option>
+        <option value="h1">Título 1 (H1)</option>
+        <option value="h2">Título 2 (H2)</option>
+        <option value="h3">Título 3 (H3)</option>
+        <option value="h4">Título 4 (H4)</option>
+      </select>
+      <select id="sizeSel" title="Tamanho da fonte">
+        <option value="">Tamanho</option>
+        <option value="2">Pequeno</option>
+        <option value="3">Normal</option>
+        <option value="4">Médio</option>
+        <option value="5">Grande</option>
+        <option value="6">Maior</option>
+        <option value="7">Enorme</option>
+      </select>
+      <span class="sep"></span>
+      <button data-cmd="undo" title="Desfazer">↶</button>
+      <button data-cmd="redo" title="Refazer">↷</button>
+      <span class="sep"></span>
+      <button data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
+      <button data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
+      <button data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+      <button data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
+      <span class="sep"></span>
+      <label class="color" title="Cor da fonte">A<input type="color" id="foreColor" value="#a855f7"></label>
+      <label class="color hl" title="Cor de destaque">🖍<input type="color" id="backColor" value="#fde047"></label>
+      <span class="sep"></span>
+      <button data-cmd="insertUnorderedList" title="Lista com marcadores">• ≡</button>
+      <button data-cmd="insertOrderedList" title="Lista numerada">1. ≡</button>
+      <span class="sep"></span>
+      <button data-cmd="justifyLeft" title="Alinhar à esquerda">⯇≡</button>
+      <button data-cmd="justifyCenter" title="Centralizar">≡</button>
+      <button data-cmd="justifyRight" title="Alinhar à direita">≡⯈</button>
+      <button data-cmd="justifyFull" title="Justificar">☰</button>
+      <span class="sep"></span>
+      <button data-cmd="removeFormat" title="Limpar formatação">Tₓ</button>
+    </div>
+
+    <div id="editor" contenteditable="true" spellcheck="true" lang="pt-BR" data-ph="Comece a escrever aqui…" aria-label="Editor de texto"></div>
+  </section>
+
+  <aside class="sidebar" aria-label="Métricas e SEO">
+    <article class="card">
+      <h3>📊 Estatísticas</h3>
+      <div class="stats">
+        <div><b id="sWords">0</b><span>Palavras</span></div>
+        <div><b id="sChars">0</b><span>Caracteres</span></div>
+        <div><b id="sCharsNo">0</b><span>Sem espaços</span></div>
+        <div><b id="sSent">0</b><span>Frases</span></div>
+        <div><b id="sPara">0</b><span>Parágrafos</span></div>
+        <div><b id="sLines">0</b><span>Linhas</span></div>
+        <div class="wide"><b id="sRead">0 s</b><span>Leitura (200 ppm)</span></div>
+        <div class="wide"><b id="sSpeak">0 s</b><span>Locução (130 ppm)</span></div>
+      </div>
+      <h4>Top 5 palavras</h4>
+      <ol id="topWords" class="top"></ol>
+    </article>
+
+    <article class="card">
+      <h3>🎯 SEO</h3>
+      <label class="fld">Palavra-chave foco<input id="kw" type="text" placeholder="ex.: receita de bolo de cenoura" autocomplete="off"></label>
+      <label class="fld">Meta Title <em id="titleCount">0/60</em><input id="mTitle" type="text" autocomplete="off"></label>
+      <label class="fld">Meta Description <em id="descCount">0/160</em><textarea id="mDesc" rows="3"></textarea></label>
+      <div class="score"><div class="score-top"><span>Score SEO</span><b id="scoreVal">0%</b></div><div class="bar"><i id="scoreBar"></i></div><small id="scoreLabel"></small></div>
+      <ul id="checks" class="checks"></ul>
+      <h4>Preview no Google</h4>
+      <div class="snip"><div class="snip-url" id="snipUrl"></div><div class="snip-title" id="snipTitle"></div><div class="snip-desc" id="snipDesc"></div></div>
+    </article>
+
+    <article class="card">
+      <h3>🧠 Semântica</h3>
+      <div class="sem-row"><span>Intenção de busca</span><b id="intent">—</b></div>
+      <div id="intentBars" class="ibars"></div>
+      <div class="sem-row"><span>Legibilidade Flesch (PT-BR)</span><b id="flesch">—</b></div>
+      <small id="fleschLabel" class="muted"></small>
+      <h4>Estrutura Hn e parágrafos</h4>
+      <ul id="hnAudit" class="checks"></ul>
+      <div id="hnTree" class="tree"></div>
+    </article>
+  </aside>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script src="script.js"></script>
+</body>
+</html>
